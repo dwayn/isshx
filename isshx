@@ -1,0 +1,91 @@
+#!/bin/bash
+osascript -e '-- Launch iTerm and log into multiple servers using SSH
+on run args
+	launch application "iTerm"
+	tell application "iTerm"
+		activate
+		-- figure out how many rows and columns are needed to represent the number of windows
+		set num to count of args
+		if count of args < 1 then
+			return "No servers given"
+		end if
+		set found to 0
+		set windowrows to 1
+		set windowcols to 1
+		repeat with r from 1 to round (num ^ 0.5) rounding up
+			repeat with c from 1 to r
+				if r * c >= num then
+					exit repeat
+				end if
+			end repeat
+			if r * c >= num then
+				set windowrows to r
+				set windowcols to c
+				exit repeat
+			end if
+		end repeat
+		set closingErrorMessage to ""
+		set mywindow to create window with default profile
+		try
+			tell application "System Events"
+				tell process "iTerm2"
+					click menu item "Zoom" of menu "Window" of menu bar 1
+				end tell
+			end tell
+		on error errStr number errorNumber
+			if errorNumber = -1719 then
+				set closingErrorMessage to "Unable to resize created iTerm window, enable assistive device access to this terminal application in System Preferences -> Security & Privacy -> Privacy -> Accessibility to allow isshx to maximize the created iTerm window"
+			end if
+		end try
+		#display dialog "rows: " & windowrows & " cols: " & windowcols
+		
+		repeat windowrows - 1 times
+			tell current session of mywindow
+				split horizontally with default profile
+			end tell
+		end repeat
+		
+		#		tell application "System Events" to keystroke "d" using command down
+		repeat with r from 1 to windowrows
+			repeat with c from 1 to windowcols - 1
+				if c +  (r - 1) * windowcols ≥ num then
+					exit repeat
+				end if
+				#display dialog "row: " & r & " col: " & c
+				tell application "System Events" to keystroke "d" using command down
+			end repeat
+			if c +  (r - 1) * windowcols ≥ num then
+				exit repeat
+			end if
+			tell application "System Events" to keystroke "]" using command down
+			delay 0.01
+		end repeat
+		#		tell application "System Events" to keystroke "]" using command down
+		(*
+		tell the mywindow
+			tell current tab
+				tell item 0 of sessions
+					write text "ls"
+				end tell
+			end tell
+		end tell
+*)
+		set i to 1
+		repeat with sess in sessions of current tab of mywindow
+			select sess
+			tell current session of mywindow
+				write text "ssh " & item i of args
+			end tell
+			#delay 1
+			set i to i + 1
+		end repeat
+		
+		#		tell current session of current window
+		#			write text "ls"
+		#		end tell
+		#		tell application "System Events" to keystroke "]" using command down
+	end tell
+	return closingErrorMessage
+end run
+' $@
+
