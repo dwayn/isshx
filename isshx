@@ -25,7 +25,15 @@ on run args
 			end if
 		end repeat
 		set closingErrorMessage to ""
+
+		-- create a new window and track its id with mywindow
 		set mywindow to create window with default profile
+
+		-- maximizes the window with the default zoom keybind
+		tell application "System Events" to keystroke "=" using {command down, option down}
+
+		-- This is much more robust way of maximizing the window, but requires accessibility privileges to work
+		(*
 		try
 			tell application "System Events"
 				tell process "iTerm2"
@@ -37,21 +45,21 @@ on run args
 				set closingErrorMessage to "Unable to resize created iTerm window, enable assistive device access to this terminal application in System Preferences -> Security & Privacy -> Privacy -> Accessibility to allow isshx to maximize the created iTerm window"
 			end if
 		end try
-		#display dialog "rows: " & windowrows & " cols: " & windowcols
-		
+		*)
+
+		-- horizontally splits the window for each of the rows, leaving the top most pane with the focus
 		repeat windowrows - 1 times
 			tell current session of mywindow
 				split horizontally with default profile
 			end tell
 		end repeat
 		
-		#		tell application "System Events" to keystroke "d" using command down
+		-- for each row, split the pane vertically moving the focus to the right each time and then push the focus after all splits to move to the pane on the next row
 		repeat with r from 1 to windowrows
 			repeat with c from 1 to windowcols - 1
 				if c +  (r - 1) * windowcols ≥ num then
 					exit repeat
 				end if
-				#display dialog "row: " & r & " col: " & c
 				tell application "System Events" to keystroke "d" using command down
 			end repeat
 			if c +  (r - 1) * windowcols ≥ num then
@@ -60,30 +68,17 @@ on run args
 			tell application "System Events" to keystroke "]" using command down
 			delay 0.01
 		end repeat
-		#		tell application "System Events" to keystroke "]" using command down
-		(*
-		tell the mywindow
-			tell current tab
-				tell item 0 of sessions
-					write text "ls"
-				end tell
-			end tell
-		end tell
-*)
+
+		-- send the ssh commands to each of the panes
 		set i to 1
 		repeat with sess in sessions of current tab of mywindow
 			select sess
 			tell current session of mywindow
 				write text "ssh " & item i of args
 			end tell
-			#delay 1
 			set i to i + 1
 		end repeat
 		
-		#		tell current session of current window
-		#			write text "ls"
-		#		end tell
-		#		tell application "System Events" to keystroke "]" using command down
 	end tell
 	return closingErrorMessage
 end run
