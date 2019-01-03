@@ -8,7 +8,7 @@ This is iTerm2 2.9+ compatible (the AppleScript API in iTerm changed significant
 
 
 ## Installation
-The whole tool is just and AppleScript in the shell script `isshx`, so it can be copied or symlinked anywhere in your path. 
+The whole tool is just an AppleScript in the shell script `isshx`, so it can be copied or symlinked anywhere in your path. 
 
 ## Usage
 isshx only needs a list of servers to ssh to:
